@@ -10,16 +10,19 @@ class CapitalizedTextFormField extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final int? maxLength;
+  final void Function(String)? onChanged;
 
-  const CapitalizedTextFormField(
-      {super.key,
-      required this.controller,
-      required this.labelText,
-      this.keyboardType = TextInputType.text,
-      this.validator,
-      this.prefixIcon,
-      this.suffixIcon,
-      this.maxLength});
+  const CapitalizedTextFormField({
+    super.key,
+    required this.controller,
+    required this.labelText,
+    this.keyboardType = TextInputType.text,
+    this.validator,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.maxLength,
+    this.onChanged,
+  });
 
   @override
   State<CapitalizedTextFormField> createState() =>
@@ -66,12 +69,7 @@ class _CapitalizedTextFormFieldState extends State<CapitalizedTextFormField> {
           borderSide: const BorderSide(color: onSurfaceColor),
         ),
       ),
-      onChanged: (value) {
-        widget.controller.value = TextEditingValue(
-          text: value.toUpperCase(),
-          selection: widget.controller.selection,
-        );
-      },
+      onChanged: widget.onChanged,
     );
   }
 }

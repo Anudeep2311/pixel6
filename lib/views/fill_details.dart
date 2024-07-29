@@ -1,5 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:pixel6/app_theme.dart';
+import 'package:pixel6/models/customer_model.dart';
+import 'package:pixel6/provider/customer_provider.dart';
+import 'package:pixel6/provider/pancard_provider.dart';
 import 'package:pixel6/provider/postcode_provider.dart';
 import 'package:pixel6/views/home_screen.dart';
 import 'package:pixel6/widgets/capitalized_form_field.dart';
@@ -29,11 +34,15 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
 
-// ---------> This function is for fetching the city and state by passing postcode
   Future<void> _fetchPostcodeDetails(String postcode) async {
     final postcodeProvider =
         Provider.of<PostcodeProvider>(context, listen: false);
     await postcodeProvider.fetchPostcodeDetails(postcode);
+  }
+
+  Future<void> _verifyPan(String panNumber) async {
+    final panProvider = Provider.of<PanProvider>(context, listen: false);
+    await panProvider.verifyPan(panNumber);
   }
 
   @override
@@ -50,22 +59,40 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CapitalizedTextFormField(
-                  controller: _panController,
-                  labelText: 'PAN Number',
-                  validator: validatePAN,
-                  keyboardType: TextInputType.text,
-                  maxLength: 10,
-                  prefixIcon:
-                      const Icon(Icons.assignment_ind, color: iconColor),
+                Consumer<PanProvider>(
+                  builder: (context, panProvider, child) {
+                    return CapitalizedTextFormField(
+                      controller: _panController,
+                      labelText: 'PAN Number',
+                      validator: validatePAN,
+                      keyboardType: TextInputType.text,
+                      maxLength: 10,
+                      prefixIcon:
+                          const Icon(Icons.assignment_ind, color: iconColor),
+                      onChanged: (value) {
+                        if (value.length == 10) {
+                          _verifyPan(value);
+                        }
+                      },
+                      suffixIcon: panProvider.isLoading
+                          ? const CircularProgressIndicator()
+                          : null,
+                    );
+                  },
                 ),
                 const TextFormFieldSizedbox(),
-                CustomTextFormField(
-                  controller: _fullNameController,
-                  keyboardType: TextInputType.text,
-                  labelText: 'Enter Full Name',
-                  maxLength: 140,
-                  prefixIcon: const Icon(Icons.abc, color: iconColor),
+                Consumer<PanProvider>(
+                  builder: (context, panProvider, child) {
+                    _fullNameController.text = panProvider.fullName ?? '';
+
+                    return CustomTextFormField(
+                      controller: _fullNameController,
+                      keyboardType: TextInputType.text,
+                      labelText: 'Enter Full Name',
+                      maxLength: 140,
+                      prefixIcon: const Icon(Icons.abc, color: iconColor),
+                    );
+                  },
                 ),
                 const TextFormFieldSizedbox(),
                 CustomTextFormField(
@@ -124,6 +151,7 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
                 const TextFormFieldSizedbox(),
                 Consumer<PostcodeProvider>(
                   builder: (context, postcodeProvider, child) {
+                    // Update stateController and cityController with the provider values
                     _stateController.text = postcodeProvider.state ?? '';
                     _cityController.text = postcodeProvider.city ?? '';
 
@@ -156,10 +184,13 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
       bottomNavigationBar: InkWell(
         onTap: () {
           if (_formKey.currentState?.validate() ?? false) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
+            _saveCustomerData(context);
+            // Navigator.pushReplacement(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (context) => const HomeScreen(),
+            //   ),
+            // );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -213,5 +244,31 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
       return "Please enter a valid PAN card number";
     }
     return null;
+  }
+
+  void _saveCustomerData(BuildContext context) {
+    final CustomerModel customer = CustomerModel(
+      pan: _panController.text,
+      fullName: _fullNameController.text,
+      email: _emailController.text,
+      phoneNumber: _phoneNumberController.text,
+      addresses: [
+        Address(
+          addressLineOne: _addressLineOneController.text,
+          addressLineTwo: _addressLineTwoController.text,
+          postcode: _postCodeController.text,
+          state: _stateController.text,
+          city: _cityController.text,
+        ),
+      ],
+    );
+    context.read<CustomerProvider>().addCustomer(customer);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const HomeScreen(),
+      ),
+    );
+    log("-------->>>>> GETTING MAIL ------>>>>>${customer.email}");
   }
 }
