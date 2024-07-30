@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:pixel6/models/customer_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:developer';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pixel6/models/customer_model.dart';
 
 class CustomerProvider with ChangeNotifier {
   List<CustomerModel> _customers = [];
@@ -13,31 +14,46 @@ class CustomerProvider with ChangeNotifier {
   }
 
   Future<void> _loadCustomers() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> customersJson = prefs.getStringList('customers') ?? [];
-    _customers = customersJson
-        .map((json) => CustomerModel.fromJson(jsonDecode(json)))
-        .toList();
-    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    final String? customerData = prefs.getString('customers');
+    if (customerData != null) {
+      try {
+        final List<dynamic> jsonList = json.decode(customerData);
+        _customers =
+            jsonList.map((json) => CustomerModel.fromJson(json)).toList();
+      } catch (e) {
+        _customers = [];
+      }
+      notifyListeners();
+    }
   }
 
   Future<void> addCustomer(CustomerModel customer) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     _customers.add(customer);
-    List<String> customersJson =
-        _customers.map((c) => jsonEncode(c.toJson())).toList();
-    await prefs.setStringList('customers', customersJson);
     notifyListeners();
+    await _saveCustomers();
   }
 
   Future<void> deleteCustomer(int index) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (index >= 0 && index < _customers.length) {
-      _customers.removeAt(index);
-      List<String> customersJson =
-          _customers.map((c) => jsonEncode(c.toJson())).toList();
-      await prefs.setStringList('customers', customersJson);
-      notifyListeners();
+    _customers.removeAt(index);
+    notifyListeners();
+    await _saveCustomers();
+  }
+
+  Future<void> updateCustomer(int index, CustomerModel updatedCustomer) async {
+    _customers[index] = updatedCustomer;
+    notifyListeners();
+    await _saveCustomers();
+  }
+
+  Future<void> _saveCustomers() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final String customerData =
+          json.encode(_customers.map((c) => c.toJson()).toList());
+      await prefs.setString('customers', customerData);
+    } catch (e) {
+      log(e.toString());
     }
   }
 }

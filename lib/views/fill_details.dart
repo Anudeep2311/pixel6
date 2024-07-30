@@ -34,6 +34,52 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    final panProvider = context.read<PanProvider>();
+    panProvider.addListener(() {
+      if (_fullNameController.text != panProvider.fullName) {
+        _fullNameController.text = panProvider.fullName ?? '';
+      }
+    });
+    _panController.addListener(() {
+      final text = _panController.text;
+      if (text != text.toUpperCase()) {
+        _panController.value = _panController.value.copyWith(
+          text: text.toUpperCase(),
+          selection: TextSelection(
+            baseOffset: _panController.selection.baseOffset,
+            extentOffset: _panController.selection.extentOffset,
+          ),
+        );
+      }
+    });
+    final postcodeProvider = context.read<PostcodeProvider>();
+    postcodeProvider.addListener(() {
+      if (_stateController.text != postcodeProvider.state) {
+        _stateController.text = postcodeProvider.state ?? '';
+      }
+      if (_cityController.text != postcodeProvider.city) {
+        _cityController.text = postcodeProvider.city ?? '';
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _panController.dispose();
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneNumberController.dispose();
+    _addressLineOneController.dispose();
+    _addressLineTwoController.dispose();
+    _postCodeController.dispose();
+    _stateController.dispose();
+    _cityController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchPostcodeDetails(String postcode) async {
     final postcodeProvider =
         Provider.of<PostcodeProvider>(context, listen: false);
@@ -49,6 +95,7 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Fill Details"),
       ),
       body: SingleChildScrollView(
@@ -75,7 +122,17 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
                         }
                       },
                       suffixIcon: panProvider.isLoading
-                          ? const CircularProgressIndicator()
+                          ? const SizedBox(
+                              height: 2,
+                              width: 2,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: onSurfaceColor,
+                                  strokeWidth: RefreshProgressIndicator
+                                      .defaultStrokeWidth,
+                                ),
+                              ),
+                            )
                           : null,
                     );
                   },
@@ -143,7 +200,17 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
                         }
                       },
                       suffixIcon: postcodeProvider.isLoading
-                          ? const CircularProgressIndicator()
+                          ? const SizedBox(
+                              height: 10,
+                              width: 10,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: onSurfaceColor,
+                                  strokeWidth: RefreshProgressIndicator
+                                      .defaultStrokeWidth,
+                                ),
+                              ),
+                            )
                           : null,
                     );
                   },
@@ -151,7 +218,6 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
                 const TextFormFieldSizedbox(),
                 Consumer<PostcodeProvider>(
                   builder: (context, postcodeProvider, child) {
-                    // Update stateController and cityController with the provider values
                     _stateController.text = postcodeProvider.state ?? '';
                     _cityController.text = postcodeProvider.city ?? '';
 
@@ -185,12 +251,6 @@ class _FillDetailsScreenState extends State<FillDetailsScreen> {
         onTap: () {
           if (_formKey.currentState?.validate() ?? false) {
             _saveCustomerData(context);
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) => const HomeScreen(),
-            //   ),
-            // );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 final ThemeData appTheme = ThemeData(
   colorScheme: const ColorScheme(
@@ -61,6 +60,14 @@ final ThemeData appTheme = ThemeData(
     color: onSurfaceColor,
     elevation: 3.0,
     surfaceTintColor: surfaceColor,
+  ),
+  snackBarTheme: const SnackBarThemeData(
+    backgroundColor: Colors.redAccent,
+    contentTextStyle: TextStyle(
+      color: Colors.black,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
   ),
 );
 

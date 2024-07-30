@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -23,18 +24,31 @@ class PanProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'Success' && data['isValid'] == true) {
-          _fullName = data['fullName'];
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _fullName = data['fullName'];
+            _isLoading = false;
+            notifyListeners();
+          });
         } else {
-          _fullName = null;
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _fullName = null;
+            _isLoading = false;
+            notifyListeners();
+          });
         }
       } else {
-        _fullName = null;
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          _fullName = null;
+          _isLoading = false;
+          notifyListeners();
+        });
       }
     } catch (e) {
-      _fullName = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        _fullName = null;
+        _isLoading = false;
+        notifyListeners();
+      });
     }
   }
 }

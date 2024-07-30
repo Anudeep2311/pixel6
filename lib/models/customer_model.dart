@@ -1,9 +1,9 @@
 class CustomerModel {
-  String pan;
-  String fullName;
-  String email;
-  String phoneNumber;
-  List<Address> addresses;
+  final String pan;
+  final String fullName;
+  final String email;
+  final String phoneNumber;
+  final List<Address> addresses;
 
   CustomerModel({
     required this.pan,
@@ -21,25 +21,23 @@ class CustomerModel {
         'addresses': addresses.map((e) => e.toJson()).toList(),
       };
 
-  factory CustomerModel.fromJson(Map<String, dynamic> json) {
-    return CustomerModel(
-      pan: json['pan'],
-      fullName: json['fullName'],
-      email: json['email'],
-      phoneNumber: json['phoneNumber'],
-      addresses: (json['addresses'] as List)
-          .map((item) => Address.fromJson(item))
-          .toList(),
-    );
-  }
+  factory CustomerModel.fromJson(Map<String, dynamic> json) => CustomerModel(
+        pan: json['pan'],
+        fullName: json['fullName'],
+        email: json['email'],
+        phoneNumber: json['phoneNumber'],
+        addresses: (json['addresses'] as List<dynamic>)
+            .map((e) => Address.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }
 
 class Address {
-  String addressLineOne;
-  String addressLineTwo;
-  String postcode;
-  String state;
-  String city;
+  final String addressLineOne;
+  final String addressLineTwo;
+  final String postcode;
+  final String state;
+  final String city;
 
   Address({
     required this.addressLineOne,
@@ -57,13 +55,11 @@ class Address {
         'city': city,
       };
 
-  factory Address.fromJson(Map<String, dynamic> json) {
-    return Address(
-      addressLineOne: json['addressLineOne'],
-      addressLineTwo: json['addressLineTwo'],
-      postcode: json['postcode'],
-      state: json['state'],
-      city: json['city'],
-    );
-  }
+  factory Address.fromJson(Map<String, dynamic> json) => Address(
+        addressLineOne: json['addressLineOne'],
+        addressLineTwo: json['addressLineTwo'],
+        postcode: json['postcode'],
+        state: json['state'],
+        city: json['city'],
+      );
 }
