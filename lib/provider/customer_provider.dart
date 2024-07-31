@@ -50,7 +50,7 @@ class CustomerProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     try {
       final String customerData =
-          json.encode(_customers.map((c) => c.toJson()).toList());
+          json.encode(_customers.map((cust) => cust.toJson()).toList());
       await prefs.setString('customers', customerData);
     } catch (e) {
       log(e.toString());
